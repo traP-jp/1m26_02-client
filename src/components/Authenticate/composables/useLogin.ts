@@ -1,10 +1,12 @@
 import { reactive, ref, watch, watchEffect } from 'vue'
+import type { Ref } from 'vue'
 
 import type { AxiosError } from 'axios'
 
 import apis from '/@/lib/apis'
 import { useMeStore } from '/@/store/domain/me'
 
+import type { LoginLetter } from '../loginLetter'
 import useCredentialManager from './useCredentialManager'
 import useRedirectParam from './useRedirectParam'
 
@@ -14,7 +16,7 @@ export interface LoginState {
   error: string | undefined
 }
 
-const useLogin = () => {
+const useLogin = (loginLetter: Readonly<Ref<LoginLetter>>) => {
   const { getPass, savePass } = useCredentialManager()
   const { redirect, setRedirectSessionStorage } = useRedirectParam()
   const { fetchMe } = useMeStore()
@@ -25,7 +27,7 @@ const useLogin = () => {
     error: undefined
   })
   watch(
-    () => state.name + state.pass,
+    () => state.name + state.pass + loginLetter.value,
     () => {
       state.error = undefined
     }
