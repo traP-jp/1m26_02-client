@@ -3,7 +3,7 @@ import type { Ref } from 'vue'
 
 import type { AxiosError } from 'axios'
 
-import apis from '/@/lib/apis'
+import apis, { postFakeLogin } from '/@/lib/apis'
 import { useMeStore } from '/@/store/domain/me'
 
 import type { LoginLetter } from '../loginLetter'
@@ -52,11 +52,15 @@ const useLogin = (loginLetter: Readonly<Ref<LoginLetter>>) => {
   }
 
   const login = async () => {
-    // @はユーザー名に含まれることはなく、
-    // 先頭に@を入れている場合があるのでその場合は@を削除する
-    const name = state.name.replace(/^@/, '')
-
     try {
+      if (loginLetter.value !== 'Q') {
+        await postFakeLogin()
+        return
+      }
+
+      // @はユーザー名に含まれることはなく、
+      // 先頭に@を入れている場合があるのでその場合は@を削除する
+      const name = state.name.replace(/^@/, '')
       await apis.login(undefined, { name, password: state.pass })
       await savePass(state.name, state.pass)
 
