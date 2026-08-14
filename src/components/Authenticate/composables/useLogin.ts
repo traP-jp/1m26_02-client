@@ -52,6 +52,19 @@ const useLogin = (loginLetter: Readonly<Ref<LoginLetter>>) => {
   }
 
   const login = async () => {
+    if (!state.name && !state.pass) {
+      state.error = 'IDとパスワードを入力してください'
+      return
+    }
+    if (!state.name) {
+      state.error = 'IDを入力してください'
+      return
+    }
+    if (!state.pass) {
+      state.error = 'パスワードを入力してください'
+      return
+    }
+
     try {
       if (loginLetter.value !== 'Q') {
         await postFakeLogin()
