@@ -1,0 +1,23 @@
+{
+    admin off
+}
+
+:80
+
+encode zstd gzip
+root * /usr/share/caddy
+
+handle /api/* {
+    reverse_proxy backend:3000
+}
+handle /.well-known/* {
+    reverse_proxy backend:3000
+}
+
+handle {
+    header /sw.js Cache-Control "max-age=0"
+    file_server {
+        precompressed br gzip
+    }
+    try_files {path} /index.html
+}

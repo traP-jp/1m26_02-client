@@ -10,6 +10,7 @@ import type { WebRTCUserStateSessions } from '/@/lib/apis'
 import type {
   ChannelId,
   ClipFolderId,
+  FileId,
   MessageId,
   StampId,
   StampPaletteId,
@@ -23,7 +24,20 @@ export type WebSocketEvent = UserEvent &
   MessageEvent &
   StampEvent &
   ClipFolderEvent &
-  QallEvent
+  QallEvent &
+  QBotEvent
+
+export type QBotState = {
+  cleared: boolean
+  revision: number
+  action: string
+  actionPayload: Record<string, string>
+  deletedAttachments: Array<{ messageId: MessageId; fileId: FileId }>
+}
+
+type QBotEvent = {
+  QBOT_ACTION: QBotState
+}
 
 /*
  * User
