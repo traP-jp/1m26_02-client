@@ -4,12 +4,10 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { wsListener } from '/@/lib/websocket'
 import type { QBotState } from '/@/lib/websocket/events'
-import router, {
-  constructFilesPath,
-  constructMessagesPath,
-  constructUserPath
-} from '/@/router'
+import router, { constructFilesPath, constructMessagesPath } from '/@/router'
+import { useUsersStore } from '/@/store/entities/users'
 import { MainViewComponentState, useMainViewStore } from '/@/store/ui/mainView'
+import { useModalStore } from '/@/store/ui/modal'
 import { defaultSelectHandler, useStampPicker } from '/@/store/ui/stampPicker'
 import { useToastStore } from '/@/store/ui/toast'
 import { convertToRefsStore } from '/@/store/utils/convertToRefsStore'
@@ -24,6 +22,8 @@ const useQBotStorePinia = defineStore('domain/qbot', () => {
   const initialized = ref(false)
   const deletedAttachmentKeys = ref(new Set<string>())
   const { currentMainViewComponentState } = useMainViewStore()
+  const { fetchUserByName } = useUsersStore()
+  const { pushModal } = useModalStore()
   const { position, alignment, selectHandler, isEffectEnabled } =
     useStampPicker()
   const { addSuccessToast } = useToastStore()
@@ -45,7 +45,13 @@ const useQBotStorePinia = defineStore('domain/qbot', () => {
       case 'open_bot':
       case 'open_user':
         if (payload['userName']) {
-          await router.push(constructUserPath(payload['userName']))
+          const user = await fetchUserByName({
+            userName: payload['userName'],
+            cacheStrategy: 'useCache'
+          })
+          if (user) {
+            pushModal({ type: 'user', id: user.id })
+          }
         }
         break
       case 'open_message':
