@@ -47,6 +47,7 @@ import useNavigationController from '/@/composables/mainView/useNavigationContro
 import useResponsive from '/@/composables/useResponsive'
 import { connectFirebase } from '/@/lib/notification/notification'
 import { useCommandPalette } from '/@/store/app/commandPalette'
+import { useLightsOutStore } from '/@/store/domain/lightsOut'
 import { useQBotStore } from '/@/store/domain/qbot'
 import { useToastStore } from '/@/store/ui/toast'
 
@@ -129,6 +130,7 @@ const {
 } = useMainViewLayout(navWidth, sidebarWidth)
 const { addToast } = useToastStore()
 const { initialize: initializeQBot } = useQBotStore()
+useLightsOutStore()
 
 useCommandPaletteShortcutKey()
 

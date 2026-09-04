@@ -15,9 +15,9 @@ handle /.well-known/* {
 }
 
 handle {
-    header /sw.js Cache-Control "max-age=0"
     file_server {
         precompressed br gzip
     }
     try_files {path} /index.html
+    header /sw.js Cache-Control "max-age=0"
 }
