@@ -1,11 +1,12 @@
 import { reactive, ref } from 'vue'
+import type { Ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import type { AxiosError } from 'axios'
 
 import apis from '/@/lib/apis'
 
-const useRegister = () => {
+const useRegister = (isFakeRegistration: Readonly<Ref<boolean>>) => {
   const router = useRouter()
   const registerState = reactive({
     name: '',
@@ -14,6 +15,10 @@ const useRegister = () => {
   const error = ref('')
 
   const register = async () => {
+    if (isFakeRegistration.value) {
+      error.value = 'エラーが発生しました'
+      return
+    }
     try {
       await apis.createUser(registerState)
       await apis.login(undefined, registerState)

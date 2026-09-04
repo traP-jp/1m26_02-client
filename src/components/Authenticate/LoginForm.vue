@@ -94,7 +94,7 @@
       </template>
       <template v-if="signUpAllowed">
         <AuthenticateSeparator :class="$style.separator" />
-        <router-link to="/registration">
+        <router-link to="/registration" @click="rememberLoginLetter">
           <AuthenticateButton
             type="secondary"
             :class="$style.registrationButton"
@@ -115,7 +115,11 @@ import AuthenticateInput from './AuthenticateInput.vue'
 import AuthenticateSeparator from './AuthenticateSeparator.vue'
 import LoginFormSaved from './LoginFormSaved.vue'
 import useLogin from './composables/useLogin'
-import { getNextLoginLetter, getRandomLoginLetter } from './loginLetter'
+import {
+  LOGIN_LETTER_SESSION_KEY,
+  getNextLoginLetter,
+  getRandomLoginLetter
+} from './loginLetter'
 
 withDefaults(
   defineProps<{
@@ -130,6 +134,9 @@ withDefaults(
 const loginLetter = ref(getRandomLoginLetter())
 const nextLoginLetter = () => {
   loginLetter.value = getNextLoginLetter(loginLetter.value)
+}
+const rememberLoginLetter = () => {
+  sessionStorage.setItem(LOGIN_LETTER_SESSION_KEY, loginLetter.value)
 }
 
 const {
