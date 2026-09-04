@@ -1,7 +1,11 @@
 <template>
   <!-- Enterキーでログインするため -->
   <form @submit.prevent="login">
-    <AuthenticateHeader :class="$style.header" />
+    <AuthenticateHeader
+      :class="$style.header"
+      :login-letter="loginLetter"
+      @next-letter="nextLoginLetter"
+    />
     <LoginFormSaved
       v-if="saved"
       :saved="saved"
@@ -90,7 +94,7 @@
       </template>
       <template v-if="signUpAllowed">
         <AuthenticateSeparator :class="$style.separator" />
-        <router-link to="/registration">
+        <router-link to="/registration" @click="rememberLoginLetter">
           <AuthenticateButton
             type="secondary"
             :class="$style.registrationButton"
@@ -103,12 +107,19 @@
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue'
+
 import AuthenticateButton from './AuthenticateButton.vue'
 import AuthenticateHeader from './AuthenticateHeader.vue'
 import AuthenticateInput from './AuthenticateInput.vue'
 import AuthenticateSeparator from './AuthenticateSeparator.vue'
 import LoginFormSaved from './LoginFormSaved.vue'
 import useLogin from './composables/useLogin'
+import {
+  LOGIN_LETTER_SESSION_KEY,
+  getNextLoginLetter,
+  getRandomLoginLetter
+} from './loginLetter'
 
 withDefaults(
   defineProps<{
@@ -120,6 +131,14 @@ withDefaults(
   }
 )
 
+const loginLetter = ref(getRandomLoginLetter())
+const nextLoginLetter = () => {
+  loginLetter.value = getNextLoginLetter(loginLetter.value)
+}
+const rememberLoginLetter = () => {
+  sessionStorage.setItem(LOGIN_LETTER_SESSION_KEY, loginLetter.value)
+}
+
 const {
   loginState,
   saved,
@@ -127,7 +146,7 @@ const {
   loginWithSaved,
   loginExternal,
   dontUseSaved
-} = useLogin()
+} = useLogin(loginLetter)
 const resetLink = window.traQConfig.auth?.resetLink
 </script>
 

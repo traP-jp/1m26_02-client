@@ -31,12 +31,19 @@
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue'
+
 import AuthenticateButton from './AuthenticateButton.vue'
 import AuthenticateHeader from './AuthenticateHeader.vue'
 import AuthenticateInput from './AuthenticateInput.vue'
 import useRegister from './composables/useRegister'
+import { LOGIN_LETTER_SESSION_KEY } from './loginLetter'
 
-const { registerState, error, register } = useRegister()
+const storedLoginLetter = sessionStorage.getItem(LOGIN_LETTER_SESSION_KEY)
+const isFakeRegistration = ref(
+  storedLoginLetter !== null && storedLoginLetter.toUpperCase() !== 'Q'
+)
+const { registerState, error, register } = useRegister(isFakeRegistration)
 </script>
 
 <style lang="scss" module>

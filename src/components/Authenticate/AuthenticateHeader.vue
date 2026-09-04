@@ -4,6 +4,11 @@
       <img :src="logoUrl" :class="$style.logo" />
       <span :class="$style.title">{{ title }}</span>
     </span>
+    <LoginMysteryLogo
+      v-else-if="loginLetter"
+      :letter="loginLetter"
+      @next-letter="emit('next-letter')"
+    />
     <div v-else :class="$style.fullLogo">
       <img :src="logoUrl" />
       <LogoText :class="$style.fullLogoText" />
@@ -15,8 +20,16 @@
 import LogoText from '/@/assets/traq-logo-text.svg?component'
 import logoUrl from '/@/assets/traq-logo.svg?url'
 
+import LoginMysteryLogo from './LoginMysteryLogo.vue'
+import type { LoginLetter } from './loginLetter'
+
 defineProps<{
   title?: string
+  loginLetter?: LoginLetter
+}>()
+
+const emit = defineEmits<{
+  (e: 'next-letter'): void
 }>()
 </script>
 
