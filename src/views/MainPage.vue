@@ -47,6 +47,8 @@ import useNavigationController from '/@/composables/mainView/useNavigationContro
 import useResponsive from '/@/composables/useResponsive'
 import { connectFirebase } from '/@/lib/notification/notification'
 import { useCommandPalette } from '/@/store/app/commandPalette'
+import { useLightsOutStore } from '/@/store/domain/lightsOut'
+import { useQBotStore } from '/@/store/domain/qbot'
 import { useToastStore } from '/@/store/ui/toast'
 
 import useInitialFetch from './composables/useInitialFetch'
@@ -127,6 +129,8 @@ const {
   isMainViewActive
 } = useMainViewLayout(navWidth, sidebarWidth)
 const { addToast } = useToastStore()
+const { initialize: initializeQBot } = useQBotStore()
+useLightsOutStore()
 
 useCommandPaletteShortcutKey()
 
@@ -139,6 +143,10 @@ const hideOuter = computed(
 
 const { routeWatcherState, triggerRouteParamChange } = useRouteWatcher()
 useInitialFetch(() => {
+  void initializeQBot().catch(error => {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to initialize q_bot state', error)
+  })
   connectFirebase(onClick => {
     addToast({
       type: 'success',

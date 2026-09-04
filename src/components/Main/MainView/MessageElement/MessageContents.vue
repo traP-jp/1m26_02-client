@@ -26,6 +26,7 @@
         v-if="embeddingsState.fileIds.length > 0"
         :class="$style.messageEmbeddingsList"
         :channel-id="message.channelId"
+        :message-id="messageId"
         :file-ids="embeddingsState.fileIds"
       />
       <MessageOgpList

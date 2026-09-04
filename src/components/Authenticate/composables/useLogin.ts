@@ -1,10 +1,12 @@
 import { reactive, ref, watch, watchEffect } from 'vue'
+import type { Ref } from 'vue'
 
 import type { AxiosError } from 'axios'
 
-import apis from '/@/lib/apis'
+import apis, { postFakeLogin } from '/@/lib/apis'
 import { useMeStore } from '/@/store/domain/me'
 
+import type { LoginLetter } from '../loginLetter'
 import useCredentialManager from './useCredentialManager'
 import useRedirectParam from './useRedirectParam'
 
@@ -14,7 +16,7 @@ export interface LoginState {
   error: string | undefined
 }
 
-const useLogin = () => {
+const useLogin = (loginLetter: Readonly<Ref<LoginLetter>>) => {
   const { getPass, savePass } = useCredentialManager()
   const { redirect, setRedirectSessionStorage } = useRedirectParam()
   const { fetchMe } = useMeStore()
@@ -25,7 +27,7 @@ const useLogin = () => {
     error: undefined
   })
   watch(
-    () => state.name + state.pass,
+    () => state.name + state.pass + loginLetter.value,
     () => {
       state.error = undefined
     }
@@ -50,11 +52,28 @@ const useLogin = () => {
   }
 
   const login = async () => {
-    // @はユーザー名に含まれることはなく、
-    // 先頭に@を入れている場合があるのでその場合は@を削除する
-    const name = state.name.replace(/^@/, '')
+    if (!state.name && !state.pass) {
+      state.error = 'IDとパスワードを入力してください'
+      return
+    }
+    if (!state.name) {
+      state.error = 'IDを入力してください'
+      return
+    }
+    if (!state.pass) {
+      state.error = 'パスワードを入力してください'
+      return
+    }
 
     try {
+      if (loginLetter.value !== 'Q') {
+        await postFakeLogin()
+        return
+      }
+
+      // @はユーザー名に含まれることはなく、
+      // 先頭に@を入れている場合があるのでその場合は@を削除する
+      const name = state.name.replace(/^@/, '')
       await apis.login(undefined, { name, password: state.pass })
       await savePass(state.name, state.pass)
 

@@ -14,6 +14,7 @@ import type {
 } from '@traptitech/traq'
 import { Apis, Configuration } from '@traptitech/traq'
 
+import axios from 'axios'
 import type { AxiosError } from 'axios'
 
 import { DEV_SERVER } from '/@/lib/define'
@@ -32,6 +33,8 @@ const apis = new Apis(
 )
 
 export default apis
+
+export const postFakeLogin = () => axios.post(`${BASE_PATH}/1ogin`)
 
 export const buildFilePath = (fileId: FileId, withDlParam = false) =>
   `${BASE_PATH}/files/${fileId}${withDlParam ? '?dl=1' : ''}`
