@@ -23,7 +23,8 @@ export type WebSocketEvent = UserEvent &
   MessageEvent &
   StampEvent &
   ClipFolderEvent &
-  QallEvent
+  QallEvent &
+  LightsOutEvent
 
 /*
  * User
@@ -111,6 +112,33 @@ export interface ChannelViewersChangedEvent {
 }
 
 export type ChannelSubscribersChangedEvent = ChannelIdBody
+
+/*
+ * Lights Out
+ */
+type LightsOutEvent = {
+  CREATE_LIGHTS_OUT: CreateLightsOutEvent
+  DELETE_LIGHTS_OUT: DeleteLightsOutEvent
+}
+
+export type LightsOutChannel = {
+  id: ChannelId
+  path: string
+  parent_id: ChannelId
+  children: ChannelId[]
+  stamp_name: string
+  stamp: string
+}
+
+export type CreateLightsOutEvent = {
+  root_channel_id: ChannelId
+  board_channel_id: ChannelId
+  channels: LightsOutChannel[]
+}
+
+export type DeleteLightsOutEvent = {
+  root_channel_id: ChannelId
+}
 
 /*
  * Message

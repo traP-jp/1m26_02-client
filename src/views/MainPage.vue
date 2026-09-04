@@ -47,6 +47,7 @@ import useNavigationController from '/@/composables/mainView/useNavigationContro
 import useResponsive from '/@/composables/useResponsive'
 import { connectFirebase } from '/@/lib/notification/notification'
 import { useCommandPalette } from '/@/store/app/commandPalette'
+import { useLightsOutStore } from '/@/store/domain/lightsOut'
 import { useToastStore } from '/@/store/ui/toast'
 
 import useInitialFetch from './composables/useInitialFetch'
@@ -127,6 +128,7 @@ const {
   isMainViewActive
 } = useMainViewLayout(navWidth, sidebarWidth)
 const { addToast } = useToastStore()
+useLightsOutStore()
 
 useCommandPaletteShortcutKey()
 

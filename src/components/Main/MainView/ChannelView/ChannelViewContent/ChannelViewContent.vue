@@ -3,19 +3,41 @@
     :class="$style.container"
     @dragstart.stop="onDragStart"
     @dragover.prevent.stop="onDragOver"
-    @drop.prevent.stop="onDrop"
+    @drop.prevent.stop="onContentDrop"
   >
-    <ChannelViewContentFileUploadOverlay
-      v-if="canDrop"
-      :class="$style.fileUploadOverlay"
-    />
-    <ChannelViewContentMain
-      :key="renderKey"
-      :channel-id="channelId"
-      :entry-message-id="entryMessageId"
-      :pinned-messages="pinnedMessages"
-      :typing-users="typingUsers"
-    />
+    <div
+      v-if="isWaitingForLightsOut"
+      :class="$style.statusPanel"
+      data-testid="lights-out-loading"
+      aria-live="polite"
+    >
+      <LoadingSpinner color="ui-secondary" />
+      <p>チャンネルの復旧状態を確認しています…</p>
+    </div>
+    <div
+      v-else-if="isLightsOutLocked"
+      :class="[$style.statusPanel, $style.errorPanel]"
+      data-testid="lights-out-error"
+      role="alert"
+    >
+      <AIcon mdi name="alert" :size="48" :class="$style.errorIcon" />
+      <div :class="$style.errorCode">ERROR: CHANNEL_DATA_CORRUPTED</div>
+      <h2>このチャンネルは復旧していません</h2>
+      <p>対応するスタンプを点灯させると、内容を閲覧できます。</p>
+    </div>
+    <template v-else>
+      <ChannelViewContentFileUploadOverlay
+        v-if="canDrop"
+        :class="$style.fileUploadOverlay"
+      />
+      <ChannelViewContentMain
+        :key="renderKey"
+        :channel-id="channelId"
+        :entry-message-id="entryMessageId"
+        :pinned-messages="pinnedMessages"
+        :typing-users="typingUsers"
+      />
+    </template>
   </div>
 </template>
 
@@ -94,7 +116,12 @@ const useDragDrop = (channelId: Ref<ChannelId>) => {
 <script lang="ts" setup>
 import type { Pin } from '@traptitech/traq'
 
+import AIcon from '/@/components/UI/AIcon.vue'
+import LoadingSpinner from '/@/components/UI/LoadingSpinner.vue'
 import { getTextOrFile } from '/@/lib/dom/dataTransfer'
+import { isLightsOutChannelLocked as checkLightsOutChannelLocked } from '/@/lib/lightsOut'
+import { useLightsOutStore } from '/@/store/domain/lightsOut'
+import { useChannelsStore } from '/@/store/entities/channels'
 
 import ChannelViewContentFileUploadOverlay from './ChannelViewContentFileUploadOverlay.vue'
 import ChannelViewContentMain from './ChannelViewContentMain.vue'
@@ -109,6 +136,36 @@ const props = defineProps<{
 const { canDrop, onDrop, onDragStart, onDragOver } = useDragDrop(
   toRef(props, 'channelId')
 )
+
+const { channelsMap } = useChannelsStore()
+const { activeChannelIds, initializationComplete, puzzle } = useLightsOutStore()
+
+const isInRandomSubtree = computed(() => {
+  const visited = new Set<ChannelId>()
+  let current = channelsMap.value.get(props.channelId)
+  while (current && !visited.has(current.id)) {
+    if (current.name.toLowerCase() === 'random') return true
+    visited.add(current.id)
+    current = current.parentId
+      ? channelsMap.value.get(current.parentId)
+      : undefined
+  }
+  return false
+})
+const isWaitingForLightsOut = computed(
+  () => isInRandomSubtree.value && !initializationComplete.value
+)
+const isLightsOutLocked = computed(() =>
+  checkLightsOutChannelLocked(
+    puzzle.value,
+    activeChannelIds.value,
+    props.channelId
+  )
+)
+const onContentDrop = (event: DragEvent) => {
+  if (isWaitingForLightsOut.value || isLightsOutLocked.value) return
+  return onDrop(event)
+}
 </script>
 
 <style lang="scss" module>
@@ -128,6 +185,46 @@ const { canDrop, onDrop, onDragStart, onDragOver } = useDragDrop(
   top: 0;
   left: 0;
   z-index: $z-index-file-upload-overlay;
+}
+
+.statusPanel {
+  display: flex;
+  flex: 1 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+
+  p,
+  h2 {
+    margin: 0;
+  }
+}
+
+.errorPanel {
+  align-self: center;
+  flex: 0 1 auto;
+  width: min(520px, calc(100% - 48px));
+  margin: auto;
+  padding: 40px 32px;
+  border: 1px solid $theme-accent-error-default;
+  border-left-width: 5px;
+  border-radius: 6px;
+  background: var(--specific-main-view-background);
+  box-shadow: 0 0 24px rgb(255 64 64 / 12%);
+}
+
+.errorIcon,
+.errorCode {
+  color: $theme-accent-error-default;
+}
+
+.errorCode {
+  font-family: monospace;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
 }
 
 .header {
