@@ -31,7 +31,6 @@ export type EphemeralNavigationSelectorEntry = {
 
 export const createItems = (notificationState: {
   channel: boolean
-  dm: boolean
 }): NavigationSelectorEntry[] => [
   {
     type: 'home',
@@ -42,15 +41,6 @@ export const createItems = (notificationState: {
   {
     type: 'channels',
     iconName: 'hash'
-  },
-  {
-    type: 'activity',
-    iconName: 'activity'
-  },
-  {
-    type: 'users',
-    iconName: 'user',
-    hasNotification: notificationState.dm
   },
   {
     type: 'clips',
@@ -83,7 +73,7 @@ export const ephemeralItems: Record<
 
 const useNavigationSelectorEntry = () => {
   const { unreadChannelsMap } = useSubscriptionStore()
-  const { channelsMap, dmChannelsMap } = useChannelsStore()
+  const { channelsMap } = useChannelsStore()
   const { hasInputChannel } = useMessageInputStateStore()
   const { fileId } = useAudioController()
   const { getQallingState } = useQall()
@@ -93,9 +83,6 @@ const useNavigationSelectorEntry = () => {
   const notificationState = reactive({
     channel: computed(() =>
       unreadChannels.value.some(c => channelsMap.value.has(c.channelId))
-    ),
-    dm: computed(() =>
-      unreadChannels.value.some(c => dmChannelsMap.value.has(c.channelId))
     )
   })
   const entries = computed(() => createItems(notificationState))

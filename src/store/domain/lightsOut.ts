@@ -23,6 +23,7 @@ import { useMeStore } from '/@/store/domain/me'
 import { useChannelsStore } from '/@/store/entities/channels'
 import { useMessagesStore } from '/@/store/entities/messages'
 import { useStampsStore } from '/@/store/entities/stamps'
+import { useToastStore } from '/@/store/ui/toast'
 import { convertToRefsStore } from '/@/store/utils/convertToRefsStore'
 import type { ChannelId, MessageId, StampId } from '/@/types/entity-ids'
 
@@ -38,6 +39,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
   const { channelsMap, bothChannelsMapInitialFetchPromise } = useChannelsStore()
   const { extendMessagesMap, fetchMessage, messagesMap } = useMessagesStore()
   const { getStampByName, stampsMapInitialFetchPromise } = useStampsStore()
+  const { addSuccessToast } = useToastStore()
 
   const puzzle = ref<CreateLightsOutEvent>()
   const boardMessageId = ref<MessageId>()
@@ -49,6 +51,12 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
   const pendingEvents = new Map<string, number>()
   let resetInProgress = false
   let ignoredResetDeletePending = false
+
+  const markCleared = (notify: boolean) => {
+    if (cleared.value) return
+    cleared.value = true
+    if (notify) addSuccessToast('チャンネルが復旧しました')
+  }
 
   const pendingKey = (action: StampAction, stampId: StampId) =>
     `${action}:${stampId}`
@@ -180,7 +188,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
       }
     )
     if (!response.ok) throw new Error(`clear lights out: ${response.status}`)
-    cleared.value = true
+    markCleared(true)
   }
 
   const fetchReadyBoard = async (
@@ -263,7 +271,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
             currentPuzzle.board_channel_id
           )
           if (message.channelId === boardChannel?.parentId) {
-            cleared.value = true
+            markCleared(true)
           }
         }
       }

@@ -1,20 +1,9 @@
 <template>
   <div>
     <NavigationContentContainer subtitle="チャンネルリスト">
-      <template #control>
-        <button :class="$style.button" @click="onClickButton">
-          <AIcon :size="20" mdi name="plus-circle-outline" />
-        </button>
-      </template>
       <template #default>
         <div :class="$style.filterContainer">
           <ChannelFilter v-model="query" :class="$style.filter" />
-          <ToggleButton
-            v-model="showArchivedChannels"
-            icon-name="archive"
-            icon-mdi
-            title="アーカイブされたチャンネルを表示する"
-          />
         </div>
         <ChannelListSelector
           v-if="query.length === 0"
@@ -69,7 +58,6 @@
 import { computed, toRaw, useId } from 'vue'
 
 import NavigationContentContainer from '/@/components/Main/NavigationBar/NavigationContentContainer.vue'
-import AIcon from '/@/components/UI/AIcon.vue'
 import EmptyState from '/@/components/UI/EmptyState.vue'
 import useChannelPath from '/@/composables/useChannelPath'
 import { filterTrees } from '/@/lib/basic/tree'
@@ -80,15 +68,12 @@ import { useFeatureFlagSettings } from '/@/store/app/featureFlagSettings'
 import { useChannelTree } from '/@/store/domain/channelTree'
 import { useStarredChannels } from '/@/store/domain/starredChannels'
 import { useChannelsStore } from '/@/store/entities/channels'
-import { useModalStore } from '/@/store/ui/modal'
 
 import ChannelFilter from '../ChannelList/ChannelFilter.vue'
 import ChannelListSelector from '../ChannelList/ChannelListSelector.vue'
 import ChannelTreeComponent from '../ChannelList/ChannelTree.vue'
-import ToggleButton from './ToggleButton.vue'
 import useChannelFilter from './composables/useChannelFilter'
 
-const { pushModal } = useModalStore()
 const { channelTree, starredChannelTree } = useChannelTree()
 const { starredChannelSet } = useStarredChannels()
 const { channelsMap } = useChannelsStore()
@@ -160,12 +145,6 @@ const filteredChannelTree = computed(() => {
   )
 })
 
-const onClickButton = () => {
-  pushModal({
-    type: 'channel-create'
-  })
-}
-
 const allPanelId = useId()
 const starredPanelId = useId()
 </script>
@@ -180,14 +159,5 @@ const starredPanelId = useId()
 }
 .filter {
   flex: 1;
-}
-.button {
-  @include color-ui-secondary-inactive;
-  padding-right: 16px;
-  cursor: pointer;
-  &:hover,
-  &:focus {
-    @include color-ui-secondary;
-  }
 }
 </style>
