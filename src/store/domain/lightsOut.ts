@@ -43,6 +43,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
   const boardMessageId = ref<MessageId>()
   const activeChannelIds = ref(new Set<ChannelId>())
   const initializationComplete = ref(false)
+  const cleared = ref(false)
   const stampToChannelId = new Map<StampId, ChannelId>()
   const channelToStampId = new Map<ChannelId, StampId>()
   const pendingEvents = new Map<string, number>()
@@ -71,6 +72,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
     stampToChannelId.clear()
     channelToStampId.clear()
     pendingEvents.clear()
+    cleared.value = false
   }
 
   const prepareStampMapping = async (event: CreateLightsOutEvent) => {
@@ -151,6 +153,36 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
     resetInProgress = false
   }
 
+  const requestClearIfSolved = async (
+    messageId: MessageId,
+    currentPuzzle: CreateLightsOutEvent
+  ) => {
+    if (cleared.value) return
+    const board = await fetchMessage({ messageId, ignoreCache: true })
+    const stampIds = new Set(channelToStampId.values())
+    const solved =
+      stampIds.size === currentPuzzle.channels.length &&
+      [...stampIds].every(stampId => {
+        const ownStamp = board.stamps.find(
+          stamp => stamp.stampId === stampId && stamp.userId === myId.value
+        )
+        return ownStamp?.count === 1
+      })
+    if (!solved) return
+
+    const response = await fetch(
+      `/api/v3/channels/${encodeURIComponent(currentPuzzle.root_channel_id)}/clearlightsout`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId })
+      }
+    )
+    if (!response.ok) throw new Error(`clear lights out: ${response.status}`)
+    cleared.value = true
+  }
+
   const fetchReadyBoard = async (
     messageId: MessageId,
     event: CreateLightsOutEvent
@@ -221,7 +253,22 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
 
   const onMessageCreated = async (messageId: MessageId) => {
     const currentPuzzle = puzzle.value
-    if (!currentPuzzle || boardMessageId.value) return
+    if (!currentPuzzle) return
+
+    if (boardMessageId.value) {
+      if (!cleared.value) {
+        const message = await fetchMessage({ messageId, ignoreCache: true })
+        if (message.content === 'チャンネルシステムが復旧しました') {
+          const boardChannel = channelsMap.value.get(
+            currentPuzzle.board_channel_id
+          )
+          if (message.channelId === boardChannel?.parentId) {
+            cleared.value = true
+          }
+        }
+      }
+      return
+    }
 
     try {
       const message = await fetchReadyBoard(messageId, currentPuzzle)
@@ -301,6 +348,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
       localStorage.setItem(storageKey, '1')
     }
     initializationComplete.value = true
+    await requestClearIfSolved(message.id, event)
     return true
   }
 
@@ -344,6 +392,20 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
       )
       extendMessagesMap(messages)
       await restoreFromLoadedMessages()
+      if (boardMessageId.value) {
+        const { data: generalMessages } = await apis.getMessages(
+          generalChannel.id,
+          100,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'desc'
+        )
+        cleared.value = generalMessages.some(
+          message => message.content === 'チャンネルシステムが復旧しました'
+        )
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to initialize Lights Out from #general', error)
@@ -380,7 +442,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
     messageId: MessageId
     stampId: StampId
   }) => {
-    if (messageId !== boardMessageId.value) return
+    if (messageId !== boardMessageId.value || cleared.value) return
 
     const channelId = stampToChannelId.get(stampId)
     const currentPuzzle = puzzle.value
@@ -443,6 +505,13 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
           )
       )
     )
+
+    try {
+      await requestClearIfSolved(messageId, currentPuzzle)
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to clear Lights Out', error)
+    }
   }
 
   wsListener.on('CREATE_LIGHTS_OUT', onCreate)
@@ -469,6 +538,7 @@ const useLightsOutStorePinia = defineStore('domain/lightsOut', () => {
   return {
     puzzle,
     boardMessageId,
+    cleared,
     activeChannelIds,
     initializationComplete
   }

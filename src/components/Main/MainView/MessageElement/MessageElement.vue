@@ -23,7 +23,7 @@
         :show="showMessageTools"
         :class="$style.tools"
         :message-id="messageId"
-        :is-minimum="isArchived"
+        :is-minimum="isArchived || isLightsOutClearedBoard"
       />
       <MessageContents
         :class="$style.messageContents"
@@ -33,7 +33,7 @@
         :show-detail-button="isHovered || isMobile"
         :message-id="messageId"
         :stamps="message.stamps"
-        :is-archived="isArchived"
+        :is-archived="isArchived || isLightsOutClearedBoard"
       />
     </div>
   </ClickOutside>
@@ -48,6 +48,7 @@ import MessageTools, {
 import ClickOutside from '/@/components/UI/ClickOutside'
 import useEmbeddings from '/@/composables/message/useEmbeddings'
 import useResponsive from '/@/composables/useResponsive'
+import { useLightsOutStore } from '/@/store/domain/lightsOut'
 import { useMessagesStore } from '/@/store/entities/messages'
 import { useMessageEditingStateStore } from '/@/store/ui/messageEditingStateStore'
 import type { MessageId, UserId } from '/@/types/entity-ids'
@@ -82,6 +83,10 @@ const bodyRef = shallowRef<HTMLDivElement | null>(null)
 const { isMobile } = useResponsive()
 const { messagesMap } = useMessagesStore()
 const message = computed(() => messagesMap.value.get(props.messageId))
+const { boardMessageId, cleared } = useLightsOutStore()
+const isLightsOutClearedBoard = computed(
+  () => cleared.value && boardMessageId.value === props.messageId
+)
 
 const { editingMessageId } = useMessageEditingStateStore()
 const isEditing = computed(() => props.messageId === editingMessageId.value)
