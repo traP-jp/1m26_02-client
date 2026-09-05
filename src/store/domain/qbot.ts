@@ -55,11 +55,11 @@ const useQBotStorePinia = defineStore('domain/qbot', () => {
         }
         break
       case 'open_message':
-      case 'open_file':
         if (payload['messageId']) {
           await router.push(constructMessagesPath(payload['messageId']))
         }
         break
+      case 'open_file':
       case 'open_image':
         if (payload['fileId']) {
           await router.push(constructFilesPath(payload['fileId']))
