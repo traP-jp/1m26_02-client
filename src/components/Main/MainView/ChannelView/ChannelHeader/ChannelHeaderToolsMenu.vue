@@ -15,6 +15,7 @@
       v-if="isChildChannelCreatable"
       icon-name="hash"
       label="子チャンネルを作成"
+      disabled
       @click="openChannelCreateModal"
       @click-item="emit('clickItem')"
     />
