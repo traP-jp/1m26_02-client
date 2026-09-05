@@ -24,14 +24,6 @@
       @autosize-updated="updateShowIsInputTextareaExpandButtonVisibility"
     />
     <div :class="$style.over" />
-    <DropdownSuggester
-      :is-shown="isSuggesterShown"
-      :width="suggesterWidth"
-      :position="suggesterPosition"
-      :candidates="suggestedCandidates"
-      :selected-index="selectedIndex"
-      @select="onSelect"
-    />
   </div>
 </template>
 
@@ -45,8 +37,6 @@ import { isFirefox } from '/@/lib/dom/browser'
 import { getScrollbarWidth } from '/@/lib/dom/scrollbar'
 import type { ChannelId } from '/@/types/entity-ids'
 
-import DropdownSuggester from './DropdownSuggester/DropdownSuggester.vue'
-import useSuggester from './composables/suggestion/useSuggester'
 import usePaste from './composables/usePaste'
 import useSendKeyWatcher from './composables/useSendKeyWatcher'
 
@@ -102,18 +92,6 @@ const { insertText } = useInsertText(textareaRef)
 const { onPaste } = usePaste(emit, insertText)
 
 const {
-  onKeyUp: onKeyUpWordSuggester,
-  onKeyDown: onKeyDownWordSuggester,
-  onBlur: onBlurWordSuggester,
-  isSuggesterShown,
-  suggesterWidth,
-  position,
-  suggestedCandidates,
-  selectedIndex,
-  onSelect
-} = useSuggester(textareaRef)
-
-const {
   onBeforeInput,
   onKeyDown: onKeyDownSendKeyWatcher,
   onKeyUp: onKeyUpSendKeyWatcher,
@@ -122,29 +100,17 @@ const {
   insertText('\n')
 })
 
-const suggesterPosition = computed(() => {
-  if (!textareaRef.value) return
-  const { top, left } = textareaRef.value.getBoundingClientRect()
-  return {
-    top: top + position.value.top,
-    left: left + position.value.left
-  }
-})
-
 const onKeyDown = (e: KeyboardEvent) => {
   onKeyDownSendKeyWatcher(e)
-  onKeyDownWordSuggester(e)
 }
 const onKeyUp = (e: KeyboardEvent) => {
   onKeyUpSendKeyWatcher(e)
-  onKeyUpWordSuggester(e)
 }
 
 const onFocus = () => {
   emit('focus')
 }
 const onBlur = () => {
-  onBlurWordSuggester()
   onBlurSendKeyWatcher()
   emit('blur')
 }
